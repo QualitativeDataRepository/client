@@ -5,6 +5,8 @@ Hammer = require('hammerjs')
 Host = require('./host')
 annotationCounts = require('./annotation-counts')
 sidebarTrigger = require('./sidebar-trigger')
+queryPrep = require('./returnQueryFromAnnotationID')
+
 
 # Minimum width to which the frame can be resized.
 MIN_RESIZE = 280
@@ -28,6 +30,9 @@ module.exports = class Sidebar extends Host
 
     if options.openSidebar || options.annotations
       this.on 'panelReady', => this.show()
+      if options.annotations
+        this.setQueryIfExists (options.annotations)
+
 
     if @plugins.BucketBar?
       @plugins.BucketBar.element.on 'click', (event) => this.show()
@@ -157,6 +162,13 @@ module.exports = class Sidebar extends Host
       @toolbar.find('[name=sidebar-toggle]')
       .removeClass('h-icon-chevron-right')
       .addClass('h-icon-chevron-left')
+
+  setQueryIfExists: (annotation_string) =>
+    query_pattern = /^query__/i
+    if annotation_string.match(query_pattern)
+      annotation_string = queryPrep(annotation_string)
+      this.on 'panelReady', => this.hide()
+    return this
 
   createAnnotation: (annotation = {}) ->
     super

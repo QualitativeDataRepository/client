@@ -13,7 +13,7 @@
 
 function removeQueryLine (annotations) {
     // separate function in hopes it can be deleted upon better solution
-    // this could accept "q__" at the risk of failing on user:master_floq__dude
+    // this could accept "q__" at the risk of failing on user:faq__man
     var result = annotations.replace(/^query__/i, '');
     return result;
 }
@@ -26,10 +26,8 @@ function returnQueryFromAnnotationID (annotations){
     }
     query = annotations.replace(/(user|any|tag)__/gi, function (tag) {
                                 return ' ' + tag.replace("__", "") + ':';
-                                });
+                                }).trim();
     return decodeURI(query);
 }
 
-module.exports = {
-    returnQueryFromAnnotationID: returnQueryFromAnnotationID,
-};
+module.exports = returnQueryFromAnnotationID;
