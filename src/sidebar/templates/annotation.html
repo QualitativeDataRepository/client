@@ -8,8 +8,12 @@
     <span ng-if="vm.user()">
       <a class="annotation-header__user"
         target="_blank"
+        ng-if="!vm.isThirdPartyUser()"
         ng-href="{{vm.serviceUrl('user',{user:vm.user()})}}"
         >{{vm.username()}}</a>
+      <span class="annotation-header__user"
+        ng-if="vm.isThirdPartyUser()"
+        >{{vm.username()}}</span>
       <span class="annotation-collapsed-replies">
         <a class="annotation-link" href=""
           ng-click="vm.onReplyCountClick()"
@@ -121,7 +125,7 @@
     <div class="annotation-section annotation-license"
       ng-show="vm.isShared() && vm.editing()">
       <a class="annotation-license__link" href="http://creativecommons.org/publicdomain/zero/1.0/"
-        title="View more information about the Creative Commons Public Domain license"
+        title="View more information about the Creative Commons Public Domain dedication"
         target="_blank">
         <i class="h-icon-cc-logo"></i><i class="h-icon-cc-zero"></i>
         Annotations can be freely reused by anyone for any purpose.
