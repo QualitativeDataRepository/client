@@ -4,6 +4,7 @@ var events = require('./events');
 var bridgeEvents = require('../shared/bridge-events');
 var metadata = require('./annotation-metadata');
 var uiConstants = require('./ui-constants');
+var memoize = require('./util/memoize');
 
 /**
  * @typedef FrameInfo
@@ -13,6 +14,23 @@ var uiConstants = require('./ui-constants');
  * @property {string} documentFingerprint - Fingerprint of the document, used
  *                    for PDFs
  */
+
+/**
+ * Return the tags of annotations displayed in a list of threads.
+ *
+ * @param {Thread[]} threads - A list of visible threads
+ * @return {string[]} List of annotation tags
+ */
+
+var annotationTags = memoize(function (threads) {
+  return threads.reduce(function (tags, thread) {
+    if (thread.annotation) {
+      tags.push(thread.annotation.$tag);
+    }
+    return tags;
+    }, []);
+});
+
 
  /**
   * Return a minimal representation of an annotation that can be sent from the
@@ -39,7 +57,7 @@ function formatAnnot(ann) {
  * sidebar.
  */
 // @ngInject
-function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
+function FrameSync($rootScope, $window, Discovery, annotationUI, bridge, rootThread) {
 
   // Set of tags of annotations that are currently loaded into the frame
   var inFrame = new Set();
@@ -53,11 +71,16 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
     var prevAnnotations = [];
     var prevFrames = [];
     var prevPublicAnns = 0;
+    var prevFilterQuery = null;
+    var prevSelectedTab = null;
+    var prevVisibleAnns = [];
 
     annotationUI.subscribe(function () {
       var state = annotationUI.getState();
       if (state.annotations === prevAnnotations &&
-          state.frames === prevFrames) {
+          state.frames === prevFrames &&
+          state.filterQuery === prevFilterQuery &&
+          state.selectedTab === prevSelectedTab) {
         return;
       }
 
@@ -108,6 +131,17 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
             prevPublicAnns = publicAnns;
           }
         }
+      }
+      
+      // Notify the page which annotations are currently visible in the sidebar
+      prevFilterQuery = state.filterQuery;
+      prevSelectedTab = state.selectedTab;
+      var visibleAnns = annotationTags(rootThread.thread(state).children);
+      if (prevVisibleAnns !== visibleAnns) {
+          console.log("BLEND THE ANNOTATIONS");
+
+
+      prevVisibleAnns = visibleAnns;
       }
     });
   }
