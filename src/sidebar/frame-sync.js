@@ -137,12 +137,49 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge, rootThr
       prevFilterQuery = state.filterQuery;
       prevSelectedTab = state.selectedTab;
       var visibleAnns = annotationTags(rootThread.thread(state).children);
-      if (prevVisibleAnns !== visibleAnns) {
-          console.log("BLEND THE ANNOTATIONS");
+      var fetch = frames.every(function (frame) { return frame.isAnnotationFetchComplete; });
+    
+      
+      if ((prevVisibleAnns.length !== visibleAnns.length) && prevVisibleAnns.every(function(element, index) {
+          return element !== visibleAnns[index];
+        })) {
+        fetch += fetch;
+        var removables = {}
+        var addables = {}
+        //if (fetch >=2 && prevFilterQuery === null) {
+          // filter is cleared, reload page
+         // console.log("reset!");
+          //bridge.call('loadAnnotations', prevAnnotations.map(formatAnnot));
 
-
-      prevVisibleAnns = visibleAnns;
-      }
+//          }
+        if (fetch >=2) {
+                           
+                           console.log("filter");
+                           console.log(visibleAnns);
+                           console.log(prevVisibleAnns);
+          
+          removables = prevAnnotations.filter(function (tag) {
+            return visibleAnns.indexOf(tag.$tag) === -1;
+          });
+          
+          addables = prevAnnotations.filter(function(tag) {
+            return visibleAnns.indexOf(tag.$tag) > -1 &&
+              prevVisibleAnns.indexOf(tag.$tag) === -1;
+          });
+                           console.log(removables);
+                           console.log(addables);
+          bridge.call('loadAnnotations', addables.map(formatAnnot));
+          bridge.call('unloadAnnotations', removables.map(formatAnnot));
+        } else  {
+                           console.log("something else happened");
+          
+          
+                           
+        }
+        prevVisibleAnns = visibleAnns;
+                           console.log(visibleAnns);
+                           console.log(prevVisibleAnns);
+    }
     });
   }
 

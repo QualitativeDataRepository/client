@@ -119,6 +119,11 @@ module.exports = class Guest extends Annotator
     this.subscribe 'annotationDeleted', (annotation) =>
       this.detach(annotation)
 
+    # try mass deletion first
+    this.subscribe 'annotationsUnloaded', (annotations) =>
+      for annotation in annotations
+        this.detach(annotation)
+
     this.subscribe 'annotationsLoaded', (annotations) =>
       for annotation in annotations
         this.anchor(annotation)
