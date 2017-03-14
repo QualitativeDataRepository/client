@@ -4,22 +4,78 @@ Entries in this change log follow the format suggested at http://keepachangelog.
 
 # Change Log
 
-## [1.0.0] - 2017-02-20
+## [1.3.0] - 2017-03-10
 
-## Fixed
+### Changed
+
+- Add a guide to developing the Hypothesis client
+  ([#265](https://github.com/hypothesis/client/pull/265)).
+
+- Add overview of client security considerations
+  ([#272](https://github.com/hypothesis/client/pull/272)).
+
+- Rename the onLogin callback to onLoginRequest
+  ([#275](https://github.com/hypothesis/client/pull/275)).
+
+### Fixed
+
+- Fix browser devtools error due to broken sourcemap link in boot script
+  ([#271](https://github.com/hypothesis/client/pull/271)).
+
+## [1.2.0] - 2017-03-01
+
+### Changed
+
+- Make boot script load settings from correct config tags
+  ([#243](https://github.com/hypothesis/client/pull/243)).
+
+- Call partner provided login callback
+  ([#260](https://github.com/hypothesis/client/pull/260)).
+
+- Add an express server which serves the package's contents during development.
+  ([#229](https://github.com/hypothesis/client/pull/229)).
+
+### Fixed
+
+- Fix anchoring of annotations in PDFs using quote selector
+  ([#261](https://github.com/hypothesis/client/pull/261),
+   [#262](https://github.com/hypothesis/client/pull/262)).
+
+## [0.59.0] - 2017-02-27
+
+### Added
+
+- Allow publishers to specify logo for top bar
+  ([#232](https://github.com/hypothesis/client/pull/232)).
+
+### Changed
+
+- Load assets from cdn.hypothes.is by default.
+
+- Update Showdown (markdown renderer) from 1.3.0 to 1.6.4
+  ([#238](https://github.com/hypothesis/client/pull/238)).
+
+### Fixed
+
+- Don't treat annotation quotes (TextQuoteSelector.exact) as HTML
+  ([#239](https://github.com/hypothesis/client/pull/239)).
+
+## [0.58.0] - 2017-02-21
+
+### Fixed
 
 - Highlights not saving on pages with many highlights and annotations
   ([#234](https://github.com/hypothesis/client/pull/234)).
 
 ## [0.57.0] - 2017-02-17
 
-## Added
+### Added
 
 - Add a boot script to the client which replaces the `/embed.js` script served
   by the Hypothesis service
   ([#215](https://github.com/hypothesis/client/pull/215)).
 
-## Changed
+### Changed
 
 - Correct CC0 terminology
   ([#222](https://github.com/hypothesis/client/pull/222)).
@@ -32,12 +88,12 @@ Entries in this change log follow the format suggested at http://keepachangelog.
 
 ## [0.56.0] - 2017-02-14
 
-## Changed
+### Changed
 
 - Improve math rendering by updating KaTeX to v0.7.1
   ([#224](https://github.com/hypothesis/client/pull/224)).
 
-## Fixed
+### Fixed
 
 - Wait for annotations to be fetched before displaying annotation counts in the
   page ([#225](https://github.com/hypothesis/client/pull/225)).

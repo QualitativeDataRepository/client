@@ -99,6 +99,7 @@ describe('FrameSync', function () {
   context('when annotations are loaded into the sidebar', function () {
     it('sends a "loadAnnotations" message to the frame', function () {
       fakeAnnotationUI.setState({annotations: [fixtures.ann]});
+      fakeAnnotationUI.setState({filterQuery: null});
       assert.calledWithMatch(fakeBridge.call, 'loadAnnotations', sinon.match([
         formatAnnot(fixtures.ann),
       ]));

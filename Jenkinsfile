@@ -27,6 +27,11 @@ node {
                 sh "npm publish"
             }
         }
+
+        // Upload the contents of the package to an S3 bucket, which it
+        // will then be served from.
+        docker.image('nickstenning/s3-npm-publish')
+              .withRun('', 'hypothesis s3://cdn.hypothes.is') { /* empty */ }
     }
 }
 

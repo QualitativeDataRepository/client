@@ -8,8 +8,11 @@ RenderingStates = require('../pdfjs-rendering-states')
 
 # Caches for performance
 
-# Map of page index to Promise<string>
+# Map of page index to page text content as a `Promise<string>`
 pageTextCache = {}
+# Two-dimensional map from `[quote][position]` to `{page, anchor}` intended to
+# optimize re-anchoring of a pair of quote and position selectors if the
+# position selector fails to anchor on its own.
 quotePositionCache = {}
 
 
@@ -46,6 +49,8 @@ getPageTextContent = (pageIndex) ->
     return pageTextCache[pageIndex]
 
 
+# Return the offset in the text for the whole document at which the text for
+# `pageIndex` begins.
 getPageOffset = (pageIndex) ->
   index = -1
 
@@ -59,6 +64,8 @@ getPageOffset = (pageIndex) ->
   return next(0)
 
 
+# Return an {index, offset, textContent} object for the page where the given
+# `offset` in the full text of the document occurs.
 findPage = (offset) ->
   index = 0
   total = 0
@@ -125,9 +132,10 @@ anchorByPosition = (page, anchor, options) ->
 
 
 # Search for a quote (with optional position hint) in the given pages.
+# Returns a `Promise<Range>` for the location of the quote.
 findInPages = ([pageIndex, rest...], quote, position) ->
   unless pageIndex?
-    return Promise.reject('quote not found')
+    return Promise.reject(new Error('Quote not found'))
 
   attempt = (info) ->
     # Try to find the quote in the current page.
@@ -146,8 +154,9 @@ findInPages = ([pageIndex, rest...], quote, position) ->
     return findInPages(rest, quote, position)
 
   cacheAndFinish = (anchor) ->
-    quotePositionCache[quote.exact] ?= {}
-    quotePositionCache[quote.exact][position.start] = {page, anchor}
+    if position
+      quotePositionCache[quote.exact] ?= {}
+      quotePositionCache[quote.exact][position.start] = {page, anchor}
     return anchorByPosition(page, anchor)
 
   page = getPage(pageIndex)
@@ -155,8 +164,9 @@ findInPages = ([pageIndex, rest...], quote, position) ->
   offset = getPageOffset(pageIndex)
 
   return Promise.all([page, content, offset])
-  .then(attempt, next)
+  .then(attempt)
   .then(cacheAndFinish)
+  .catch(next)
 
 
 # When a position anchor is available, quote search can prioritize pages by
@@ -244,6 +254,19 @@ exports.anchor = (root, selectors, options = {}) ->
   return promise
 
 
+###*
+# Convert a DOM Range object into a set of selectors.
+#
+# Converts a DOM `Range` object describing a start and end point within a
+# `root` `Element` and converts it to a `[position, quote]` tuple of selectors
+# which can be saved into an annotation and later passed to `anchor` to map
+# the selectors back to a `Range`.
+#
+# :param Element root: The root Element
+# :param Range range: DOM Range object
+# :param Object options: Options passed to `TextQuoteAnchor` and
+#                        `TextPositionAnchor`'s `toSelector` methods.
+###
 exports.describe = (root, range, options = {}) ->
 
   range = new xpathRange.BrowserRange(range).normalize()
@@ -282,6 +305,11 @@ exports.describe = (root, range, options = {}) ->
     return Promise.all([position, quote])
 
 
+###*
+# Clear the internal caches of page text contents and quote locations.
+#
+# This exists mainly as a helper for use in tests.
+###
 exports.purgeCache = ->
   pageTextCache = {}
   quotePositionCache = {}
