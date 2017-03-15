@@ -31,7 +31,6 @@ var annotationTags = memoize(function (threads) {
     }, []);
 });
 
-
  /**
   * Return a minimal representation of an annotation that can be sent from the
   * sidebar app to a connected frame.
@@ -113,7 +112,10 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge, rootThr
       // when they are added or removed in the sidebar, but not re-anchoring
       // annotations if their selectors are updated.
       if (added.length > 0) {
-        bridge.call('loadAnnotations', added.map(formatAnnot));
+        // delay loading annotations if a default query exists.
+        if (prevFilterQuery == null) {
+          bridge.call('loadAnnotations', added.map(formatAnnot));
+        }
         added.forEach(function (annot) {
           inFrame.add(annot.$tag);
         });
@@ -138,48 +140,45 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge, rootThr
       prevSelectedTab = state.selectedTab;
       var visibleAnns = annotationTags(rootThread.thread(state).children);
       var fetch = frames.every(function (frame) { return frame.isAnnotationFetchComplete; });
-    
-      
-      if ((prevVisibleAnns.length !== visibleAnns.length) && prevVisibleAnns.every(function(element, index) {
-          return element !== visibleAnns[index];
-        })) {
-        fetch += fetch;
-        var removables = {}
-        var addables = {}
-        //if (fetch >=2 && prevFilterQuery === null) {
-          // filter is cleared, reload page
-         // console.log("reset!");
-          //bridge.call('loadAnnotations', prevAnnotations.map(formatAnnot));
+      var ready = prevAnnotations.length && visibleAnns.length
+      if (prevFilterQuery) {
+        fetch = true;
+      }
 
-//          }
-        if (fetch >=2) {
+      // both prevVisibleAnns and visibleAnns should follow the order of the sidebar
+      // so a non-sorted check should suffice.
                            
-                           console.log("filter");
-                           console.log(visibleAnns);
-                           console.log(prevVisibleAnns);
-          
+      var annotations_changed = fetch && ready && (prevVisibleAnns.length !== visibleAnns.length ||
+        prevVisibleAnns.every(function(v,i) { return v !== visibleAnns[i]}));
+      
+      if (annotations_changed) {
+        var removables = null;
+        var addables = null;
+
+        if (prevFilterQuery) {
           removables = prevAnnotations.filter(function (tag) {
             return visibleAnns.indexOf(tag.$tag) === -1;
-          });
+                                              });
           
           addables = prevAnnotations.filter(function(tag) {
             return visibleAnns.indexOf(tag.$tag) > -1 &&
-              prevVisibleAnns.indexOf(tag.$tag) === -1;
+              prevVisibleAnns.indexOf(tag.$tag) == -1;
           });
-                           console.log(removables);
-                           console.log(addables);
-          bridge.call('loadAnnotations', addables.map(formatAnnot));
-          bridge.call('unloadAnnotations', removables.map(formatAnnot));
-        } else  {
-                           console.log("something else happened");
-          
-          
-                           
+          } else {
+          removables = null;
+          addables = prevAnnotations.filter(function(tag) {
+            return visibleAnns.indexOf(tag.$tag) > -1 &&
+            prevVisibleAnns.indexOf(tag.$tag) == -1;
+            });
+          }
+          if (removables) {
+            bridge.call('unloadAnnotations', removables.map(formatAnnot));
+          }
+          if (addables) {
+            bridge.call('loadAnnotations', addables.map(formatAnnot));
+          }
         }
         prevVisibleAnns = visibleAnns;
-                           console.log(visibleAnns);
-                           console.log(prevVisibleAnns);
-    }
     });
   }
 

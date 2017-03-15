@@ -46,8 +46,6 @@ module.exports = class AnnotationSync
 
     'unloadAnnotations': (bodies, cb) ->
       annotations = (this._parse(a) for a in bodies)
-      for annotation in annotations
-        delete @cache[annotation.$tag]
       @_emit('annotationsUnloaded', annotations)
       cb(null, annotations)
 
