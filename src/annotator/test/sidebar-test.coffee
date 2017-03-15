@@ -1,4 +1,5 @@
 Annotator = require('annotator')
+events = require('../../shared/bridge-events')
 
 proxyquire = require('proxyquire')
 Sidebar = proxyquire('../sidebar', {
@@ -45,6 +46,70 @@ describe 'Sidebar', ->
         sidebar = createSidebar()
         emitEvent('hide')
         assert.called(target)
+
+    describe 'on DO_LOGIN event', ->
+      it 'calls the onLoginRequest callback function if one was provided', ->
+        onLoginRequest = sandbox.stub()
+        sidebar = createSidebar(options={services: [{onLoginRequest: onLoginRequest}]})
+
+        emitEvent(events.DO_LOGIN)
+
+        assert.called(onLoginRequest)
+
+      it 'only calls the onLoginRequest callback of the first service', ->
+        # Even though options.services is an array it only calls the onLoginRequest
+        # callback function of the first service. The onLoginRequests of any other
+        # services are ignored.
+        firstOnLogin  = sandbox.stub()
+        secondOnLogin = sandbox.stub()
+        thirdOnLogin  = sandbox.stub()
+        sidebar = createSidebar(
+          options={
+            services: [
+              {onLoginRequest: firstOnLogin},
+              {onLoginRequest: secondOnLogin},
+              {onLoginRequest: thirdOnLogin},
+            ]
+          }
+        )
+
+        emitEvent(events.DO_LOGIN)
+
+        assert.called(firstOnLogin)
+        assert.notCalled(secondOnLogin)
+        assert.notCalled(thirdOnLogin)
+
+      it 'never calls the onLoginRequest callbacks of further services', ->
+        # Even if the first service doesn't have an onLoginRequest, it still doesn't
+        # call the onLoginRequests of further services.
+        secondOnLogin = sandbox.stub()
+        thirdOnLogin  = sandbox.stub()
+        sidebar = createSidebar(
+          options={
+            services: [
+              {},
+              {onLoginRequest: secondOnLogin},
+              {onLoginRequest: thirdOnLogin},
+            ]
+          }
+        )
+
+        emitEvent(events.DO_LOGIN)
+
+        assert.notCalled(secondOnLogin)
+        assert.notCalled(thirdOnLogin)
+
+      it 'does not crash if there is no services', ->
+        sidebar = createSidebar(options={})  # No options.services
+        emitEvent(events.DO_LOGIN)
+
+      it 'does not crash if services is an empty array', ->
+        sidebar = createSidebar(options={services: []})
+        emitEvent(events.DO_LOGIN)
+
+      it 'does not crash if the first service has no onLoginRequest', ->
+        sidebar = createSidebar(options={services: [{}]})
+        emitEvent(events.DO_LOGIN)
 
   describe 'pan gestures', ->
     sidebar = null
